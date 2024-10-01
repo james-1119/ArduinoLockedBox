@@ -1,15 +1,23 @@
 //Initializing the variables 
-#define STEPPER_PIN_1 7
-#define STEPPER_PIN_2 8
-#define STEPPER_PIN_3 12
-#define STEPPER_PIN_4 13
+#define STEPPER_PIN_1 4
+#define STEPPER_PIN_2 5
+#define STEPPER_PIN_3 6
+#define STEPPER_PIN_4 7
+
+#define GREEN 10
+#define RED 9
+#define BLUE 11
+#define YELLOW 3
+
 int step_number = 0;
 int passDig = 0;
 bool firstup = true;
 bool firstdown = true;
 bool firstleft = true;
 bool firstright = true;
+bool firstbut = true;
 bool open = false;
+bool OC = true;
 
 //Creates a string array for the correct password as well as the user input
 String CorrectPassword[6] = {"up", "up", "down", "down", "left", "right"};
@@ -23,6 +31,9 @@ void setup() {
  pinMode(STEPPER_PIN_2, OUTPUT);
  pinMode(STEPPER_PIN_3, OUTPUT);
  pinMode(STEPPER_PIN_4, OUTPUT);
+
+ pinMode(12, OUTPUT);     
+ digitalWrite(12, HIGH);   
 
 //Sets the pin 2 (where the joystick button goes) as input
  pinMode(2, INPUT_PULLUP);
@@ -41,25 +52,44 @@ void loop() {
 
   int yellow, blue, green, red;     //Creates integer variables for the different colored lightes that show user input
 
-  
+
  
-  if(sensorvaluebut == 0){      //Checks for when the joystick button is pressed
+  if(sensorvaluebut == 0 && firstbut == true){      //Checks for when the joystick button is pressed
        if(PasswordCheck(CorrectPassword, EnteredPassword) == true){  //Using the PasswordCheck function, checks if the two arrays are equal
           open = true; //Sets open to true
        }
+
     passDig = 0; //Sets the current password digit back to the start
+    firstbut = false;
   }
 
-  if(open == true){ //Checks for if the open variable is true
+  if(sensorvaluebut == 1){
+    firstbut = true;
+  }
 
-    for(int i = 0; i < 1000; i++){  //For loop that runs the stepper motor 
+  if(open == true && OC == true){ //Checks for if the open variable is true
+
+    for(int i = 0; i < 1032; i++){  //For loop that runs the stepper motor 
 
       OneStep(true);  //Calls the OneStep function which activates the stepper motor
-      delay(2);       //Delays 2 ms to make sure the stepper motor functions properly
+      delay(3);       //Delays 2 ms to make sure the stepper motor functions properly
 
     }
 
     open = false; //Sets open to false
+    OC = false;
+  }
+  else if (open == true && OC == false)
+  {
+     for(int i = 0; i < 1032; i++){  //For loop that runs the stepper motor 
+
+      OneStep(false);  //Calls the OneStep function which activates the stepper motor
+      delay(3);       //Delays 2 ms to make sure the stepper motor functions properly
+
+    }
+
+    open = false;
+    OC = true;
   }
 
 
@@ -69,10 +99,10 @@ void loop() {
 
   if(brightnessy >= 0)  //if the brightnessy is in the positive direction execute 
   {
-    analogWrite(10, brightnessy);  //Set the left light (green) to equal brightness y
-    analogWrite(9, 0);    //Sets the right light (red) to have 0 brightness
+    analogWrite(GREEN, brightnessy);  //Set the left light (green) to equal brightness y
+    analogWrite(RED, 0);    //Sets the right light (red) to have 0 brightness
 
-    if(brightnessy > 120 && firstleft == true){   //When the brightness level of the light reaches its max, and its the first time its greater than 120
+    if(brightnessy > 80 && firstleft == true){   //When the brightness level of the light reaches its max, and its the first time its greater than 120
 
       EnteredPassword[passDig] = "left";  //Inputs "left" into the EnteredPassword array in element passDig
       passDig++;  //Increases the array element by one
@@ -85,22 +115,22 @@ void loop() {
   }
   else  //When brightness y is in the negative direction execute:
   {
-    analogWrite(9, -brightnessy);
-        if(-brightnessy > 120 && firstright == true){
+    analogWrite(RED, -brightnessy);
+        if(-brightnessy > 80 && firstright == true){
       EnteredPassword[passDig] = "right";
       passDig++;
       firstright = false;
     }
 
-    if(brightnessy > -100){
+    if(brightnessy > -60){
       firstright = true;
     }
   }
   if(brightnessx >= 0)
   {
-    analogWrite(11, brightnessx);
-    analogWrite(3, 0);
-    if(brightnessx > 120 && firstdown == true){
+    analogWrite(BLUE, brightnessx);
+    analogWrite(YELLOW, 0);
+    if(brightnessx > 80 && firstdown == true){
       EnteredPassword[passDig] = "down";
       passDig++;
       firstdown = false;
@@ -112,19 +142,19 @@ void loop() {
   }
   else
   {       
-      if(-brightnessx > 120 && firstup == true){
+      if(-brightnessx > 80 && firstup == true){
       EnteredPassword[passDig] = "up";
       passDig++;
-      firstup = false;
+      firstup = false;      
     }
 
-    if(brightnessx > -100){
+    if(brightnessx > -60){
       firstup = true;
     }
         
-    analogWrite(3, -brightnessx);
+    analogWrite(YELLOW, -brightnessx);
   }
- 
+
 }
 
 void OneStep(bool dir){ //OneStep function that runs the stepper motor moving it forward by one step every time it is called
